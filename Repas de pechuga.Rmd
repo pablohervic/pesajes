@@ -1,0 +1,179 @@
+---
+title: "Repaso de Pechuga"
+output: 
+
+  flexdashboard::flex_dashboard:
+    
+    orientation: columns
+    vertical_layout: fill
+    logo: logo6.png
+    theme:
+      bg: "#EBE9E9"
+      primary: "#D11C1F"
+      secondary: "#D11C1F"
+      base_font: "Roboto"
+      enable-gradients: "TRUE"
+      enable-shadows: "FALSE"
+      spacer: "0.75rem"
+      bootswatch: "simplex"
+      fg: "#000000"
+    runtime: shiny
+   
+---
+
+```{r setup, include=FALSE}
+
+
+library(flexdashboard)
+library(shinyWidgets)
+library(bslib)
+# Core
+library(tidyverse)
+library(tidyquant)
+library(shiny)
+library(DT)
+library(shinyalert)
+# Interactive Visualizations
+library(vroom)
+
+```
+
+```{r}
+
+operarios<-c(56,5,7,62,63,64,14,13,12,11,19,22)
+repasosdecarne<-c("Pechuga C/piel","Pechuga S/piel","Pechuga Normal","Piel")
+genero<-c("Macho","Hembra")
+ useShinyalert()
+```
+
+Pesaje
+=======================================================
+## Datos {data-width="500"}
+
+### 
+
+```{r}
+numericInput(inputId = "peso",label = h3("Peso"),min = 0,value = 0)
+                
+
+selectInput(
+   inputId = "operario",
+   label = h3("Operario"), 
+    choices = operarios,multiple = FALSE
+  
+)
+
+
+
+selectInput(
+   inputId = "repaso",
+   label = h3("Repaso"), 
+    choices = repasosdecarne,multiple = FALSE
+  
+)
+
+
+
+radioGroupButtons(
+   inputId = "genero",
+   label = h3("Género"),
+   choices = genero,
+   justified = TRUE,width=600,
+   
+   checkIcon = list(
+      yes = icon("mars", 
+    lib = "font-awesome"))
+)
+
+
+
+actionButton(inputId = "validar",label = h4("Validar"),icon = icon("check",lib="font-awesome"),width = 300)
+
+actionButton(inputId = "actualizar",label = h4("Actualizar"),icon = icon("sync",lib="font-awesome"),width = 300)
+ 
+ 
+validacion_datos<-observeEvent(eventExpr = input$validar,handlerExpr = {
+     
+   dato<-data.frame(input$operario,input$peso,input$repaso,input$genero,Sys.time())
+
+
+    ruta<-"C:/Users/Pablito/Desktop/numbers/COREN.csv"
+    write.table(dato, ruta, append = TRUE,
+          sep = ",",
+          col.names = FALSE,
+          row.names = FALSE,
+          quote = FALSE)
+  sendSweetAlert(
+    session = session,
+    title = "Dato introducido correctamente!!",
+    text = "CPA_COREN",
+    type = "success"
+  )
+   })
+```
+## Datos {data-width="400"}
+###
+```{r}
+
+
+actualizar_registro<-eventReactive(eventExpr = input$actualizar,valueExpr = {
+  dato<-read.csv("C:/Users/Pablito/Desktop/numbers/COREN.csv")
+colnames(dato)<-c("Operario","Peso","Tipo_Repaso","Genero","Hora")
+
+  dato%>%
+   arrange(desc(Hora))
+  
+ 
+
+},ignoreNULL = FALSE)
+
+output$tabladatos<-DT::renderDataTable( expr = {
+  
+  actualizar_registro()
+})
+
+DT::dataTableOutput(outputId = "tabladatos")
+
+
+
+
+```
+
+Registros
+==================================
+
+##Resumen diario
+
+```{r}
+actionButton(inputId = "VRegis",label = h4("Visualizar Registro"),icon = icon(name = "clipboard",lib="font-awesome"))
+
+visualizar<-eventReactive(eventExpr = input$VRegis,valueExpr = {
+  resumen<-read.csv("C:/Users/Pablito/Desktop/numbers/COREN.csv")
+colnames(resumen)<-c("Operario","Peso","Tipo_Repaso","Genero","Hora")
+
+  resumen%>%
+    group_by(Operario,Genero)%>%
+    summarise(Total_Peso=sum(Peso))
+    
+  
+},ignoreNULL = FALSE)
+
+output$resumen<-DT::renderDataTable( expr = {
+  
+  visualizar()
+})
+
+DT::dataTableOutput(outputId = "resumen")
+
+
+
+```
+
+
+Resumen Mensual
+===============================================
+### chart
+```{r}
+
+```
+

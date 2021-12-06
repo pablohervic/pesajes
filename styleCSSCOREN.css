@@ -1,0 +1,10 @@
+
+navbar-inverse {
+    background-color: #ae0a0a;
+    border-color: #e3c961;
+}
+
+navbar-fixed-top {
+    top: 0;
+    border-width: 0 0 5px;
+}
